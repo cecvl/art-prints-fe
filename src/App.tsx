@@ -4,7 +4,9 @@ import UploadPage from "@/pages/UploadPage";
 import SignupPage from "@/pages/SignupPage";
 import GalleryPage from "@/pages/GalleryPage";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
-import { MainNav } from "@/components/main-navbar"; // Make sure this path is correct
+import { MainNav } from "@/components/main-navbar";
+import ProfilePage from "@/pages/ProfilePage";
+import ProfileSettings from "@/pages/ProfileSettings";
 
 function App() {
   return (
@@ -16,11 +18,20 @@ function App() {
             <Route path="/" element={<GalleryPage />} />
             <Route path="/signin" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route
               path="/upload"
               element={
                 <ProtectedRoute>
                   <UploadPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <ProfileSettings />
                 </ProtectedRoute>
               }
             />

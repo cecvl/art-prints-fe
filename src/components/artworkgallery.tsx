@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Artwork {
   id: string;
@@ -115,7 +116,42 @@ export function ArtworkGallery() {
         })}
       </div>
 
-      {loading && <p className="text-center py-4">Loading more...</p>}
+      {loading && (
+        <>
+          {/* Skeletons for LG screens */}
+          <div className="hidden lg:grid grid-cols-3 gap-6 mt-6">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="h-72">
+                <Skeleton className="h-40 w-full rounded-t-xl" />
+                <CardContent className="space-y-2 mt-4">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-5/6" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Skeletons for smaller screens */}
+          <div className="block lg:hidden mt-6">
+            <Masonry
+              breakpointCols={{ default: 2, 500: 2 }}
+              className="flex gap-4"
+              columnClassName="flex flex-col gap-4"
+            >
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="w-full h-60">
+                  <Skeleton className="h-36 w-full rounded-t-xl" />
+                  <CardContent className="space-y-2 mt-4">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </Masonry>
+          </div>
+        </>
+      )}
     </div>
   );
 }

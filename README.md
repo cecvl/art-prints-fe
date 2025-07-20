@@ -16,6 +16,6 @@ Run `npm run dev` to launch app
 
 ## shad-cn components
 
-npx shadcn@latest add components
+npx shadcn@latest add ==component-name==
 
 Check Out : [Shadcn Ui components](https://ui.shadcn.com/docs/components)

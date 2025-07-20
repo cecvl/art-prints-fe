@@ -31,7 +31,7 @@ export function SignUpForm({
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      navigate("/upload"); // or redirect to login if you prefer
+      navigate("/"); // or redirect to login if you prefer
     } catch (err: any) {
       setError(err.message);
     }

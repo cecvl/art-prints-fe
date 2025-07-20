@@ -30,8 +30,28 @@ export function LoginForm({
     const auth = getAuth(app);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate("/upload"); // change this to your desired route
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const idToken = await userCredential.user.getIdToken();
+
+      // Send token to backend to set session cookie
+      const response = await fetch("http://localhost:3001/sessionLogin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Important to receive the Set-Cookie
+        body: JSON.stringify({ idToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to set session cookie");
+      }
+
+      navigate("/"); // Go to protected area
     } catch (err: any) {
       setError(err.message);
     }
