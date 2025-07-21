@@ -44,7 +44,7 @@ export function LoginForm({
           "Content-Type": "application/json",
         },
         credentials: "include", // Important to receive the Set-Cookie
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ token: idToken }),
       });
 
       if (!response.ok) {

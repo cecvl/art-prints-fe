@@ -34,7 +34,8 @@ export default function ProfileForm({ defaultValues }: ProfileFormProps) {
     defaultValues?.backgroundUrl || null
   );
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setSubmitting(true);
 
     const formData = new FormData();
@@ -44,8 +45,10 @@ export default function ProfileForm({ defaultValues }: ProfileFormProps) {
     if (avatar) formData.append("avatar", avatar);
     if (background) formData.append("background", background);
 
+    console.log("📨 Submitting form data...");
+
     try {
-      const res = await fetch("http://localhost:3001/profile", {
+      const res = await fetch("http://localhost:3001/updateprofile", {
         method: "POST",
         credentials: "include",
         body: formData,
@@ -62,7 +65,10 @@ export default function ProfileForm({ defaultValues }: ProfileFormProps) {
   };
 
   return (
-    <div className="max-w-xl mx-auto space-y-6 p-6 bg-white rounded-xl shadow">
+    <form
+      onSubmit={handleSubmit}
+      className="max-w-xl mx-auto space-y-6 p-6 bg-white rounded-xl shadow"
+    >
       <div>
         <Label htmlFor="name">Name</Label>
         <Input
@@ -138,10 +144,10 @@ export default function ProfileForm({ defaultValues }: ProfileFormProps) {
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={handleSubmit} disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? "Updating..." : "Update Profile"}
         </Button>
       </div>
-    </div>
+    </form>
   );
 }

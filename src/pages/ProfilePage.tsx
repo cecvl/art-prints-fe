@@ -15,7 +15,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const res = await fetch("http://localhost:3001/profile/view", {
+      const res = await fetch("http://localhost:3001/getprofile", {
         credentials: "include",
       });
       const data = await res.json();
