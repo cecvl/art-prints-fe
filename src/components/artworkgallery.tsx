@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import Masonry from "react-masonry-css";
+import { Blurhash } from "react-blurhash";
 import {
   Card,
   CardContent,
@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 interface Artwork {
   id: string;
@@ -15,17 +16,19 @@ interface Artwork {
   imageUrl: string;
   artistID: string;
   createdAt: any;
+  blurhash?: string;
 }
 
 export function ArtworkGallery() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const observer = useRef<IntersectionObserver | null>(null);
 
   const lastArtworkRef = useCallback(
     (node: HTMLDivElement | null) => {
-      if (loading) return;
+      if (loading || !hasMore) return;
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting) {
@@ -34,80 +37,74 @@ export function ArtworkGallery() {
       });
       if (node) observer.current.observe(node);
     },
-    [loading]
+    [loading, hasMore]
   );
 
-  useEffect(() => {
-    const fetchArtworks = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`http://localhost:3001/artworks?page=${page}`);
-        const data = await res.json();
-        setArtworks((prev) => [...prev, ...data]);
-      } catch (err) {
-        console.error("Failed to fetch artworks:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchArtworks();
+  const fetchArtworks = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`http://localhost:3001/artworks?page=${page}`);
+      const data = await res.json();
+      setArtworks((prev) => [...prev, ...data]);
+      setHasMore(data.length > 0);
+    } catch (err) {
+      console.error("Failed to fetch artworks:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [page]);
+
+  useEffect(() => {
+    fetchArtworks();
+  }, [fetchArtworks]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-6">
       <h2 className="text-2xl font-bold mb-6">Art Gallery</h2>
 
-      {/* 👇 Masonry layout for smaller screens */}
-      <div className="block lg:hidden">
-        <Masonry
-          breakpointCols={{ default: 2, 500: 2 }}
-          className="flex gap-4"
-          columnClassName="flex flex-col gap-4"
-        >
-          {artworks.map((art, idx) => {
-            const isLast = idx === artworks.length - 1;
-            return (
-              <Card
-                key={art.id}
-                ref={isLast ? lastArtworkRef : null}
-                className="w-full"
-              >
-                <img
-                  src={art.imageUrl}
-                  alt={art.title}
-                  className="w-full rounded-t-xl"
-                />
-                <CardContent>
-                  <CardTitle className="text-sm">{art.title}</CardTitle>
-                  <CardDescription className="text-xs">
-                    {art.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </Masonry>
-      </div>
-
-      {/* 👇 Grid layout for larger screens */}
-      <div className="hidden lg:grid grid-cols-3 gap-6">
+      {/* Responsive grid layout */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         {artworks.map((art, idx) => {
           const isLast = idx === artworks.length - 1;
           return (
             <Card
               key={art.id}
               ref={isLast ? lastArtworkRef : null}
-              className="h-72 overflow-hidden"
+              className="hover:shadow-lg transition-shadow duration-200 group"
             >
-              <img
-                src={art.imageUrl}
-                alt={art.title}
-                className="w-full h-40 object-cover rounded-t-xl"
-              />
-              <CardContent className="h-32 overflow-hidden">
-                <CardTitle className="text-sm truncate">{art.title}</CardTitle>
-                <CardDescription className="text-xs overflow-hidden text-ellipsis">
+              <div className="relative w-full aspect-square overflow-hidden rounded-t-lg">
+                {art.blurhash ? (
+                  <Blurhash
+                    hash={art.blurhash}
+                    width="100%"
+                    height="100%"
+                    resolutionX={32}
+                    resolutionY={32}
+                    punch={1}
+                  />
+                ) : (
+                  <Skeleton className="absolute inset-0 w-full h-full" />
+                )}
+                <img
+                  src={art.imageUrl}
+                  alt={art.title}
+                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+                  style={{
+                    opacity: art.blurhash ? 0 : 1,
+                  }}
+                  loading="lazy"
+                  decoding="async"
+                  onLoad={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.style.opacity = "1";
+                  }}
+                />
+              </div>
+              <CardContent className="p-3">
+                <CardTitle className="text-sm font-medium line-clamp-1">
+                  {art.title}
+                </CardTitle>
+                <CardDescription className="text-xs line-clamp-2 mt-1">
                   {art.description}
                 </CardDescription>
               </CardContent>
@@ -116,41 +113,39 @@ export function ArtworkGallery() {
         })}
       </div>
 
+      {/* Loading skeletons */}
       {loading && (
-        <>
-          {/* Skeletons for LG screens */}
-          <div className="hidden lg:grid grid-cols-3 gap-6 mt-6">
-            {[...Array(3)].map((_, i) => (
-              <Card key={i} className="h-72">
-                <Skeleton className="h-40 w-full rounded-t-xl" />
-                <CardContent className="space-y-2 mt-4">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-full" />
-                  <Skeleton className="h-3 w-5/6" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i}>
+              <Skeleton className="w-full aspect-square rounded-t-lg" />
+              <CardContent className="p-3 space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-5/6" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-          {/* Skeletons for smaller screens */}
-          <div className="block lg:hidden mt-6">
-            <Masonry
-              breakpointCols={{ default: 2, 500: 2 }}
-              className="flex gap-4"
-              columnClassName="flex flex-col gap-4"
-            >
-              {[...Array(4)].map((_, i) => (
-                <Card key={i} className="w-full h-60">
-                  <Skeleton className="h-36 w-full rounded-t-xl" />
-                  <CardContent className="space-y-2 mt-4">
-                    <Skeleton className="h-4 w-2/3" />
-                    <Skeleton className="h-3 w-full" />
-                  </CardContent>
-                </Card>
-              ))}
-            </Masonry>
-          </div>
-        </>
+      {/* Load More button */}
+      {!loading && hasMore && artworks.length > 0 && (
+        <div className="mt-8 text-center">
+          <Button
+            onClick={() => setPage((p) => p + 1)}
+            variant="outline"
+            className="px-8 py-4"
+          >
+            Load More Artworks
+          </Button>
+        </div>
+      )}
+
+      {!loading && !hasMore && artworks.length > 0 && (
+        <p className="mt-8 text-center text-muted-foreground">
+          You've reached the end of the gallery
+        </p>
       )}
     </div>
   );
