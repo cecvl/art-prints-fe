@@ -4,6 +4,7 @@ import {
   ShoppingCart,
   User,
   Settings as SettingsIcon,
+  UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -140,6 +141,24 @@ export function MainNav() {
                 <SettingsIcon className="w-6 h-6" />
                 <span className="absolute opacity-0 group-hover:opacity-100 text-xs mt-2 px-2 py-1 rounded bg-black text-white dark:bg-white dark:text-black transition-opacity">
                   Settings
+                </span>
+              </Link>
+            </li>
+          )}
+          {/* Profile - only if user is signed in */}
+          {user && (
+            <li className="group relative">
+              <Link
+                to="/profile"
+                className={cn(
+                  "flex flex-col items-center text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors",
+                  location.pathname === "/profile" &&
+                    "text-black dark:text-white"
+                )}
+              >
+                <UserCircle className="w-6 h-6" />
+                <span className="absolute opacity-0 group-hover:opacity-100 text-xs mt-2 px-2 py-1 rounded bg-black text-white dark:bg-white dark:text-black transition-opacity">
+                  Profile
                 </span>
               </Link>
             </li>

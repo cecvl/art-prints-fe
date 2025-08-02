@@ -9,7 +9,7 @@ export default function ProfileSettings() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:3001/getprofile", {
+        const res = await fetch("http://localhost:3001/updateprofile", {
           method: "GET",
           credentials: "include",
         });
