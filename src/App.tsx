@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ToasterProvider } from "@/components/ToasterProvider"; // ✅ Import ToasterProvider
 import LoginPage from "@/pages/LoginPage";
 import UploadPage from "@/pages/UploadPage";
 import SignupPage from "@/pages/SignupPage";
@@ -44,6 +45,8 @@ function App() {
             />
           </Routes>
         </main>
+        //Q:Add Toaster ToasterProvider // <ToasterProvider />{" "}
+        {/* ✅ Add ToasterProvider for notifications */}
       </div>
     </Router>
   );
