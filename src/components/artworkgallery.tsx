@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Blurhash } from "react-blurhash";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -8,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { ShoppingCart } from "lucide-react";
 
 interface Artwork {
   id: string;
@@ -17,6 +19,7 @@ interface Artwork {
   artistID: string;
   createdAt: any;
   blurhash?: string;
+  price?: number;
 }
 
 export function ArtworkGallery() {
@@ -24,7 +27,19 @@ export function ArtworkGallery() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [cartItems, setCartItems] = useState<Artwork[]>([]);
   const observer = useRef<IntersectionObserver | null>(null);
+
+  const addToCart = (artwork: Artwork) => {
+    setCartItems((prev) => [...prev, artwork]);
+    toast.success("Added to cart", {
+      description: `${artwork.title} has been added to your cart`,
+      action: {
+        label: "View Cart",
+        onClick: () => console.log("Navigate to cart"),
+      },
+    });
+  };
 
   const lastArtworkRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -60,7 +75,19 @@ export function ArtworkGallery() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-6">
-      <h2 className="text-2xl font-bold mb-6">Art Gallery</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Art Gallery</h2>
+        <div className="relative">
+          <Button variant="outline" size="icon">
+            <ShoppingCart className="h-5 w-5" />
+            {cartItems.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {cartItems.length}
+              </span>
+            )}
+          </Button>
+        </div>
+      </div>
 
       {/* Responsive grid layout */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
@@ -101,12 +128,27 @@ export function ArtworkGallery() {
                 />
               </div>
               <CardContent className="p-3">
-                <CardTitle className="text-sm font-medium line-clamp-1">
-                  {art.title}
-                </CardTitle>
-                <CardDescription className="text-xs line-clamp-2 mt-1">
-                  {art.description}
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-sm font-medium line-clamp-1">
+                      {art.title}
+                    </CardTitle>
+                    <CardDescription className="text-xs line-clamp-2 mt-1">
+                      {art.description}
+                    </CardDescription>
+                    {art.price && (
+                      <p className="text-sm font-semibold mt-2">${art.price}</p>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 ml-2"
+                    onClick={() => addToCart(art)}
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );
