@@ -45,8 +45,7 @@ function App() {
             />
           </Routes>
         </main>
-        //Q:Add Toaster ToasterProvider // <ToasterProvider />{" "}
-        {/* ✅ Add ToasterProvider for notifications */}
+        <ToasterProvider /> {/* ✅ Add ToasterProvider for notifications */}
       </div>
     </Router>
   );

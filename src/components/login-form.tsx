@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { app } from "../lib/firebase"; // Adjust this path if needed
-
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserSessionPersistence,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import { app } from "../lib/firebase";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,19 +28,28 @@ export function LoginForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const auth = getAuth(app);
+  const googleProvider = new GoogleAuthProvider();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    const auth = getAuth(app);
+    setIsLoading(true);
 
     try {
+      // Set auth persistence before signing in
+      await setPersistence(auth, browserSessionPersistence);
+
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
+
+      console.log("User UID:", userCredential.user.uid); // Debug log
+
       const idToken = await userCredential.user.getIdToken();
 
       // Send token to backend to set session cookie
@@ -43,7 +58,7 @@ export function LoginForm({
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Important to receive the Set-Cookie
+        credentials: "include",
         body: JSON.stringify({ token: idToken }),
       });
 
@@ -51,9 +66,47 @@ export function LoginForm({
         throw new Error("Failed to set session cookie");
       }
 
-      navigate("/"); // Go to protected area
+      navigate("/"); // Redirect to protected area
     } catch (err: any) {
-      setError(err.message);
+      console.error("Login error:", err);
+      setError(err.message || "Failed to sign in. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      await setPersistence(auth, browserSessionPersistence);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      console.log("Google User UID:", user.uid); // Debug log
+
+      const idToken = await user.getIdToken();
+
+      const response = await fetch("http://localhost:3001/sessionLogin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ token: idToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to set session cookie");
+      }
+
+      navigate("/");
+    } catch (err: any) {
+      console.error("Google sign-in error:", err);
+      setError(err.message || "Failed to sign in with Google.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -67,14 +120,25 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleEmailLogin}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  type="button"
+                  disabled={isLoading}
+                >
                   {/* Apple Icon */}
                   Login with Apple
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading}
+                >
                   {/* Google Icon */}
                   Login with Google
                 </Button>
@@ -96,6 +160,7 @@ export function LoginForm({
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="grid gap-3">
@@ -114,13 +179,14 @@ export function LoginForm({
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
                   />
                 </div>
                 {error && (
                   <p className="text-sm text-red-500 text-center">{error}</p>
                 )}
-                <Button type="submit" className="w-full">
-                  Login
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Signing in..." : "Login"}
                 </Button>
               </div>
 
